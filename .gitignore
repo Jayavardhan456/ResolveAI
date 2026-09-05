@@ -1,0 +1,28 @@
+# Python virtual environment
+backend/venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Node dependencies
+node_modules/
+frontend/node_modules/
+
+# Frontend build
+dist/
+frontend/dist/
+
+# SQLite database
+*.db
+backend/resolveai.db
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
