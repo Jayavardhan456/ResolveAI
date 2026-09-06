@@ -19,6 +19,10 @@ from ai_engine import (
 from datetime import datetime
 
 
+# =========================================
+# FASTAPI APP
+# =========================================
+
 app = FastAPI(
     title="ResolveAI",
     description="AI-Powered Intelligent Grievance & Resolution System"
@@ -31,16 +35,13 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-
     allow_origins=[
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://YOUR-VERCEL-APP.vercel.app"],
-
+        "https://resolve-ai-rust.vercel.app",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
     allow_credentials=True,
-
     allow_methods=["*"],
-
     allow_headers=["*"],
 )
 
