@@ -1,148 +1,173 @@
 import { useState } from "react";
 import axios from "axios";
 
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup
-} from "react-leaflet";
-
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  Legend
-} from "recharts";
-
-import "leaflet/dist/leaflet.css";
-
-import L from "leaflet";
-
 import "./App.css";
 
 
-const API_URL = "https://resolveai-bry0.onrender.com";
+const API_URL =
+  "https://resolveai-bry0.onrender.com";
 
-
-/* =========================================
-   LEAFLET ICON
-========================================= */
-
-delete L.Icon.Default.prototype._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png"
-
-});
-
-
-/* =========================================
-   APP
-========================================= */
 
 function App() {
+
+
+  // =====================================
+  // PAGE
+  // =====================================
 
   const [page, setPage] =
     useState("login");
 
+
+  const [activeTab, setActiveTab] =
+    useState("submit");
+
+
+  // =====================================
+  // LOGIN
+  // =====================================
+
   const [role, setRole] =
     useState("");
+
 
   const [name, setName] =
     useState("");
 
+
   const [mobile, setMobile] =
     useState("");
+
 
   const [password, setPassword] =
     useState("");
 
+
+  // =====================================
+  // COMPLAINT
+  // =====================================
+
   const [complaintText, setComplaintText] =
     useState("");
+
 
   const [latitude, setLatitude] =
     useState("");
 
+
   const [longitude, setLongitude] =
     useState("");
+
 
   const [locationName, setLocationName] =
     useState("");
 
+
   const [locationLoading, setLocationLoading] =
     useState(false);
 
-  const [image, setImage] =
-    useState(null);
 
   const [imagePreview, setImagePreview] =
     useState(null);
 
-  const [result, setResult] =
-    useState(null);
 
   const [loading, setLoading] =
     useState(false);
 
+
+  const [result, setResult] =
+    useState(null);
+
+
+  // =====================================
+  // TRACKING
+  // =====================================
+
+  const [myComplaints, setMyComplaints] =
+    useState([]);
+
+
+  const [trackingLoading, setTrackingLoading] =
+    useState(false);
+
+
+  // =====================================
+  // PROCUREMENT
+  // =====================================
+
+  const [centres, setCentres] =
+    useState([]);
+
+
+  const [centresLoading, setCentresLoading] =
+    useState(false);
+
+
+  const [cropType, setCropType] =
+    useState("Paddy");
+
+
+  const [quantity, setQuantity] =
+    useState("");
+
+
+  const [bookingLoading, setBookingLoading] =
+    useState(false);
+
+
+  const [bookings, setBookings] =
+    useState([]);
+
+
+  // =====================================
+  // OFFICER
+  // =====================================
+
   const [complaints, setComplaints] =
     useState([]);
+
 
   const [dashboardLoading, setDashboardLoading] =
     useState(false);
 
-  const [search, setSearch] =
+
+  const [officerName, setOfficerName] =
     useState("");
 
-  const [priorityFilter, setPriorityFilter] =
-    useState("All");
 
-  const [statusFilter, setStatusFilter] =
-    useState("All");
+  const [selectedComplaint, setSelectedComplaint] =
+    useState(null);
+
+
+  const [progress, setProgress] =
+    useState(0);
+
+
+  const [progressNote, setProgressNote] =
+    useState("");
+
+
+  const [selectedStatus, setSelectedStatus] =
+    useState("In Progress");
+
 
   const [incidentDetails, setIncidentDetails] =
     useState(null);
 
-  const [incidentLoading, setIncidentLoading] =
-    useState(false);
 
-  const [showVerification, setShowVerification] =
-    useState(null);
-
-  const [verificationComment, setVerificationComment] =
-    useState("");
-
-  const [verificationLoading, setVerificationLoading] =
-    useState(false);
-
-
-  /* =========================================
-     LOGIN
-  ========================================= */
+  // =====================================
+  // LOGIN
+  // =====================================
 
   const handleLogin = (e) => {
 
     e.preventDefault();
 
+
     if (
-      !name ||
-      !mobile ||
-      !password
+      !name.trim() ||
+      !mobile.trim() ||
+      !password.trim()
     ) {
 
       alert(
@@ -167,31 +192,62 @@ function App() {
   };
 
 
-  /* =========================================
-     LOCATION
-  ========================================= */
+  // =====================================
+  // SELECT ROLE
+  // =====================================
+
+  const selectRole = (selectedRole) => {
+
+    setRole(
+      selectedRole
+    );
+
+
+    if (selectedRole === "Officer") {
+
+      setPage("officer");
+
+      loadAllComplaints();
+
+    } else {
+
+      setPage("user");
+
+      setActiveTab("submit");
+
+    }
+  };
+
+
+  // =====================================
+  // CURRENT LOCATION
+  // =====================================
 
   const getCurrentLocation = () => {
 
     if (!navigator.geolocation) {
 
       alert(
-        "Geolocation is not supported."
+        "Geolocation is not supported by this browser."
       );
 
       return;
     }
 
 
-    setLocationLoading(true);
+    setLocationLoading(
+      true
+    );
 
 
     navigator.geolocation.getCurrentPosition(
 
       async (position) => {
 
+
         const lat =
           position.coords.latitude;
+
 
         const lon =
           position.coords.longitude;
@@ -206,7 +262,9 @@ function App() {
 
           const response =
             await fetch(
+
               `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`
+
             );
 
 
@@ -215,47 +273,50 @@ function App() {
 
 
           setLocationName(
+
             data.display_name ||
-            `${lat.toFixed(6)}, ${lon.toFixed(6)}`
+
+            "Current Location"
+
           );
 
-        } catch (error) {
+        } catch {
 
           setLocationName(
-            `${lat.toFixed(6)}, ${lon.toFixed(6)}`
+            "Current Location"
           );
+
         }
 
 
-        setLocationLoading(false);
+        setLocationLoading(
+          false
+        );
+
       },
 
 
       () => {
 
         alert(
-          "Unable to get location. Please allow location access."
+          "Unable to get your location. Please allow location permission."
         );
 
-        setLocationLoading(false);
-      },
 
+        setLocationLoading(
+          false
+        );
 
-      {
-        enableHighAccuracy: true,
-
-        timeout: 10000,
-
-        maximumAge: 0
       }
 
     );
+
   };
 
 
-  /* =========================================
-     IMAGE
-  ========================================= */
+  // =====================================
+  // IMAGE
+  // =====================================
 
   const handleImageUpload = (e) => {
 
@@ -266,20 +327,24 @@ function App() {
     if (!file) {
 
       return;
+
     }
 
 
-    setImage(file);
-
     setImagePreview(
-      URL.createObjectURL(file)
+
+      URL.createObjectURL(
+        file
+      )
+
     );
+
   };
 
 
-  /* =========================================
-     SUBMIT COMPLAINT
-  ========================================= */
+  // =====================================
+  // SUBMIT COMPLAINT
+  // =====================================
 
   const submitComplaint = async (e) => {
 
@@ -289,24 +354,31 @@ function App() {
     if (!complaintText.trim()) {
 
       alert(
-        "Please enter your complaint."
+        "Please describe your grievance."
       );
 
       return;
     }
 
 
-    setLoading(true);
+    setLoading(
+      true
+    );
 
 
     try {
 
+
       const response =
         await axios.post(
+
           `${API_URL}/complaints`,
+
           {
 
             name,
+
+            role,
 
             complaint_text:
               complaintText,
@@ -319,9 +391,13 @@ function App() {
             longitude:
               longitude
                 ? parseFloat(longitude)
-                : null
+                : null,
+
+            location_name:
+              locationName || null
 
           }
+
         );
 
 
@@ -330,337 +406,635 @@ function App() {
       );
 
 
-      setComplaintText("");
+      setComplaintText(
+        ""
+      );
+
+
+      alert(
+        "Grievance submitted successfully!"
+      );
 
 
     } catch (error) {
 
-      console.error(error);
+
+      console.error(
+        error
+      );
+
 
       alert(
-        "Unable to submit complaint. Make sure backend is running."
+
+        error.response?.data?.detail ||
+
+        "Unable to submit grievance. Please try again."
+
       );
+
 
     } finally {
 
-      setLoading(false);
+      setLoading(
+        false
+      );
+
     }
+
   };
 
 
-  /* =========================================
-     LOAD COMPLAINTS
-  ========================================= */
+  // =====================================
+  // LOAD USER COMPLAINTS
+  // =====================================
 
-  const loadComplaints =
-    async () => {
+  const loadMyComplaints = async () => {
 
-      setDashboardLoading(true);
-
-
-      try {
-
-        const response =
-          await axios.get(
-            `${API_URL}/complaints`
-          );
+    setTrackingLoading(
+      true
+    );
 
 
-        setComplaints(
-          response.data
-        );
+    try {
 
 
-      } catch (error) {
+      const response =
+        await axios.get(
 
-        console.error(error);
+          `${API_URL}/complaints`,
 
-        alert(
-          "Unable to load complaints."
-        );
-
-      } finally {
-
-        setDashboardLoading(false);
-      }
-    };
-
-
-  /* =========================================
-     UPDATE STATUS
-  ========================================= */
-
-  const updateComplaintStatus =
-    async (
-      complaintId,
-      newStatus
-    ) => {
-
-      try {
-
-        await axios.put(
-          `${API_URL}/complaints/${complaintId}/status`,
-          null,
           {
+
             params: {
-              status: newStatus
+
+              name
+
             }
+
           }
+
         );
 
 
-        loadComplaints();
-
-
-      } catch (error) {
-
-        console.error(error);
-
-        alert(
-          "Unable to update status."
-        );
-      }
-    };
-
-
-  /* =========================================
-     INCIDENT DETAILS
-  ========================================= */
-
-  const openIncident =
-    async (incidentId) => {
-
-      setIncidentLoading(true);
-
-      setIncidentDetails(null);
-
-
-      try {
-
-        const response =
-          await axios.get(
-            `${API_URL}/incidents/${incidentId}`
-          );
-
-
-        setIncidentDetails(
-          response.data
-        );
-
-
-      } catch (error) {
-
-        console.error(error);
-
-        alert(
-          "Unable to load incident details."
-        );
-
-      } finally {
-
-        setIncidentLoading(false);
-      }
-    };
-
-
-  /* =========================================
-     RESOLUTION VERIFICATION
-  ========================================= */
-
-  const verifyResolution =
-    async (
-      complaintId,
-      verified
-    ) => {
-
-      setVerificationLoading(
-        true
+      setMyComplaints(
+        response.data
       );
 
 
-      try {
-
-        await axios.put(
-          `${API_URL}/complaints/${complaintId}/verify`,
-          {
-
-            verified,
-
-            comment:
-              verificationComment
-
-          }
-        );
+    } catch (error) {
 
 
-        setShowVerification(
-          null
-        );
-
-        setVerificationComment(
-          ""
-        );
+      console.error(
+        error
+      );
 
 
-        loadComplaints();
+      alert(
+        "Unable to load tracking information."
+      );
 
 
-        alert(
-          verified
-            ? "Resolution verified successfully."
-            : "Complaint reopened for further action."
-        );
+    } finally {
 
+      setTrackingLoading(
+        false
+      );
 
-      } catch (error) {
+    }
 
-        console.error(error);
-
-        alert(
-          "Unable to verify resolution."
-        );
-
-      } finally {
-
-        setVerificationLoading(
-          false
-        );
-      }
-    };
-
-
-  /* =========================================
-     SLA CHECK
-  ========================================= */
-
-  const runSlaCheck =
-    async () => {
-
-      try {
-
-        const response =
-          await axios.post(
-            `${API_URL}/sla/check`
-          );
-
-
-        alert(
-          `SLA check complete. New escalations: ${response.data.new_escalations}`
-        );
-
-
-        loadComplaints();
-
-
-      } catch (error) {
-
-        console.error(error);
-
-        alert(
-          "Unable to run SLA check."
-        );
-      }
-    };
-
-
-  /* =========================================
-     OFFICER
-  ========================================= */
-
-  const openOfficerDashboard =
-    () => {
-
-      setRole("Officer");
-
-      setPage("officer");
-
-      loadComplaints();
-    };
-
-
-  /* =========================================
-     LOGOUT
-  ========================================= */
-
-  const logout = () => {
-
-    setPage("login");
-
-    setRole("");
-
-    setResult(null);
-
-    setComplaintText("");
-
-    setImage(null);
-
-    setImagePreview(null);
-
-    setLocationName("");
-
-    setLatitude("");
-
-    setLongitude("");
-
-    setIncidentDetails(null);
   };
 
 
-  /* =========================================
-     LOGIN PAGE
-  ========================================= */
+  // =====================================
+  // LOAD PROCUREMENT CENTRES
+  // =====================================
+
+  const loadCentres = async () => {
+
+    setCentresLoading(
+      true
+    );
+
+
+    try {
+
+
+      const response =
+        await axios.get(
+
+          `${API_URL}/procurement/centres`
+
+        );
+
+
+      setCentres(
+        response.data
+      );
+
+
+    } catch (error) {
+
+
+      console.error(
+        error
+      );
+
+
+      alert(
+        "Unable to load procurement centres."
+      );
+
+
+    } finally {
+
+      setCentresLoading(
+        false
+      );
+
+    }
+
+  };
+
+
+  // =====================================
+  // LOAD BOOKINGS
+  // =====================================
+
+  const loadBookings = async () => {
+
+    try {
+
+
+      const response =
+        await axios.get(
+
+          `${API_URL}/procurement/bookings/${name}`
+
+        );
+
+
+      setBookings(
+        response.data
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        error
+      );
+
+    }
+
+  };
+
+
+  // =====================================
+  // BOOK PROCUREMENT SLOT
+  // =====================================
+
+  const bookSlot = async (
+
+    centre,
+
+    slot
+
+  ) => {
+
+
+    if (!quantity.trim()) {
+
+      alert(
+        "Please enter crop quantity before booking."
+      );
+
+      return;
+    }
+
+
+    setBookingLoading(
+      true
+    );
+
+
+    try {
+
+
+      await axios.post(
+
+        `${API_URL}/procurement/bookings`,
+
+        {
+
+          farmer_name:
+            name,
+
+          centre_id:
+            centre.id,
+
+          slot_date:
+            slot.date,
+
+          slot_time:
+            slot.time,
+
+          crop_type:
+            cropType,
+
+          quantity
+
+        }
+
+      );
+
+
+      alert(
+        "Procurement slot booked successfully!"
+      );
+
+
+      loadCentres();
+
+      loadBookings();
+
+
+    } catch (error) {
+
+
+      alert(
+
+        error.response?.data?.detail ||
+
+        "Unable to book slot."
+
+      );
+
+
+    } finally {
+
+      setBookingLoading(
+        false
+      );
+
+    }
+
+  };
+
+
+  // =====================================
+  // LOAD ALL COMPLAINTS
+  // =====================================
+
+  const loadAllComplaints = async () => {
+
+    setDashboardLoading(
+      true
+    );
+
+
+    try {
+
+
+      const response =
+        await axios.get(
+
+          `${API_URL}/complaints`
+
+        );
+
+
+      setComplaints(
+        response.data
+      );
+
+
+    } catch (error) {
+
+
+      console.error(
+        error
+      );
+
+
+      alert(
+        "Unable to load complaints."
+      );
+
+
+    } finally {
+
+      setDashboardLoading(
+        false
+      );
+
+    }
+
+  };
+
+
+  // =====================================
+  // OPEN OFFICER UPDATE
+  // =====================================
+
+  const openOfficerUpdate = (
+
+    complaint
+
+  ) => {
+
+
+    setSelectedComplaint(
+      complaint
+    );
+
+
+    setOfficerName(
+
+      complaint.assigned_officer ||
+
+      ""
+
+    );
+
+
+    setProgress(
+
+      complaint.officer_progress ||
+
+      0
+
+    );
+
+
+    setProgressNote(
+
+      complaint.progress_note ||
+
+      ""
+
+    );
+
+
+    setSelectedStatus(
+
+      complaint.status ||
+
+      "In Progress"
+
+    );
+
+  };
+
+
+  // =====================================
+  // UPDATE OFFICER PROGRESS
+  // =====================================
+
+  const updateOfficerProgress = async () => {
+
+    if (!selectedComplaint) {
+
+      return;
+
+    }
+
+
+    try {
+
+
+      await axios.put(
+
+        `${API_URL}/complaints/${selectedComplaint.id}/officer`,
+
+        {
+
+          assigned_officer:
+            officerName || null,
+
+          officer_progress:
+            Number(progress),
+
+          progress_note:
+            progressNote,
+
+          status:
+            selectedStatus
+
+        }
+
+      );
+
+
+      alert(
+        "Officer progress updated successfully!"
+      );
+
+
+      setSelectedComplaint(
+        null
+      );
+
+
+      loadAllComplaints();
+
+
+    } catch (error) {
+
+
+      console.error(
+        error
+      );
+
+
+      alert(
+        "Unable to update officer progress."
+      );
+
+    }
+
+  };
+
+
+  // =====================================
+  // INCIDENT DETAILS
+  // =====================================
+
+  const openIncident = async (
+
+    incidentId
+
+  ) => {
+
+    try {
+
+
+      const response =
+        await axios.get(
+
+          `${API_URL}/incidents/${incidentId}`
+
+        );
+
+
+      setIncidentDetails(
+        response.data
+      );
+
+
+    } catch {
+
+      alert(
+        "Unable to load master incident details."
+      );
+
+    }
+
+  };
+
+
+  // =====================================
+  // STATUS COLOR
+  // =====================================
+
+  const getStatusClass = (
+
+    status
+
+  ) => {
+
+
+    const value =
+
+      status
+        ?.toLowerCase()
+        .replaceAll(
+          " ",
+          "-"
+        );
+
+
+    return `status ${value}`;
+
+  };
+
+
+  // =====================================
+  // LOGOUT
+  // =====================================
+
+  const logout = () => {
+
+    setPage(
+      "login"
+    );
+
+
+    setRole(
+      ""
+    );
+
+
+    setName(
+      ""
+    );
+
+
+    setMobile(
+      ""
+    );
+
+
+    setPassword(
+      ""
+    );
+
+
+    setComplaintText(
+      ""
+    );
+
+
+    setResult(
+      null
+    );
+
+
+    setMyComplaints(
+      []
+    );
+
+
+    setCentres(
+      []
+    );
+
+
+    setBookings(
+      []
+    );
+
+  };
+
+
+  // =====================================
+  // LOGIN PAGE
+  // =====================================
 
   if (page === "login") {
 
     return (
 
-      <div className="app-container">
+      <div className="app-shell">
 
         <div className="login-card">
 
-          <div className="logo-section">
 
-            <div className="logo-icon">
-              R
-            </div>
+          <div className="logo-circle">
 
-            <h1>
-              ResolveAI
-            </h1>
-
-            <p>
-              AI-Powered Intelligent Grievance & Resolution System
-            </p>
+            R
 
           </div>
+
+
+          <h1>
+            ResolveAI
+          </h1>
+
+
+          <p className="subtitle">
+
+            AI-Powered Intelligent Grievance
+            & Resolution System
+
+          </p>
 
 
           <form
             onSubmit={handleLogin}
           >
 
-            <h2>
-              Login
-            </h2>
-
-            <p className="form-subtitle">
-              Access the ResolveAI prototype
-            </p>
-
 
             <label>
               Name
             </label>
 
+
             <input
+
               type="text"
+
               placeholder="Enter your name"
+
               value={name}
+
               onChange={(e) =>
+
                 setName(
                   e.target.value
                 )
+
               }
+
             />
 
 
@@ -668,24 +1042,38 @@ function App() {
               Mobile Number
             </label>
 
+
             <input
+
               type="tel"
-              placeholder="10-digit mobile number"
-              value={mobile}
+
               maxLength="10"
+
               inputMode="numeric"
+
+              placeholder="10-digit mobile number"
+
+              value={mobile}
+
               onChange={(e) => {
 
                 const value =
+
                   e.target.value.replace(
                     /\D/g,
                     ""
                   );
 
+
                 setMobile(
-                  value.slice(0, 10)
+                  value.slice(
+                    0,
+                    10
+                  )
                 );
+
               }}
+
             />
 
 
@@ -693,200 +1081,220 @@ function App() {
               Password
             </label>
 
+
             <input
+
               type="password"
+
               placeholder="Enter password"
+
               value={password}
+
               onChange={(e) =>
+
                 setPassword(
                   e.target.value
                 )
+
               }
+
             />
 
 
             <button
-              type="submit"
               className="primary-button"
+              type="submit"
             >
+
               Continue →
+
             </button>
+
 
           </form>
 
 
-          <p className="demo-text">
-            SIH 2026 Prototype • ResolveAI
+          <p className="prototype-text">
+
+            ResolveAI Prototype
+
           </p>
+
 
         </div>
 
       </div>
+
     );
+
   }
 
 
-  /* =========================================
-     ROLE PAGE
-  ========================================= */
+  // =====================================
+  // ROLE PAGE
+  // =====================================
 
   if (page === "role") {
 
     return (
 
-      <div className="app-container">
+      <div className="app-shell">
 
         <div className="role-card">
 
-          <div className="brand-small">
-            ResolveAI
-          </div>
 
           <h1>
-            Select your role
+            Welcome, {name}
           </h1>
 
+
           <p>
-            Choose how you want to use the platform.
+            Select how you want to use ResolveAI
           </p>
 
 
-          <div className="role-options">
+          <div className="role-grid">
 
 
             <button
+
               className="role-option"
-              onClick={() => {
 
-                setRole("Citizen");
-
-                setPage("complaint");
-
-              }}
-            >
-
-              <div className="role-icon">
-                👤
-              </div>
-
-              <div className="role-content">
-
-                <h2>
-                  Citizen
-                </h2>
-
-                <p>
-                  Report civic issues and public grievances.
-                </p>
-
-              </div>
-
-              <span className="arrow">
-                →
-              </span>
-
-            </button>
-
-
-            <button
-              className="role-option"
-              onClick={() => {
-
-                setRole("Farmer");
-
-                setPage("complaint");
-
-              }}
-            >
-
-              <div className="role-icon">
-                🌾
-              </div>
-
-              <div className="role-content">
-
-                <h2>
-                  Farmer
-                </h2>
-
-                <p>
-                  Report procurement, crop, payment and mandi issues.
-                </p>
-
-              </div>
-
-              <span className="arrow">
-                →
-              </span>
-
-            </button>
-
-
-            <button
-              className="role-option"
-              onClick={
-                openOfficerDashboard
+              onClick={() =>
+                selectRole(
+                  "Citizen"
+                )
               }
+
             >
 
-              <div className="role-icon">
-                🏢
-              </div>
-
-              <div className="role-content">
-
-                <h2>
-                  Officer
-                </h2>
-
-                <p>
-                  Prioritize, manage and resolve grievances.
-                </p>
-
-              </div>
-
-              <span className="arrow">
-                →
+              <span className="role-icon">
+                👤
               </span>
 
+
+              <h2>
+                Citizen
+              </h2>
+
+
+              <p>
+                Report and track public grievances.
+              </p>
+
+
             </button>
+
+
+            <button
+
+              className="role-option"
+
+              onClick={() =>
+                selectRole(
+                  "Farmer"
+                )
+              }
+
+            >
+
+              <span className="role-icon">
+                🌾
+              </span>
+
+
+              <h2>
+                Farmer
+              </h2>
+
+
+              <p>
+                Report issues and book procurement slots.
+              </p>
+
+
+            </button>
+
+
+            <button
+
+              className="role-option"
+
+              onClick={() =>
+                selectRole(
+                  "Officer"
+                )
+              }
+
+            >
+
+              <span className="role-icon">
+                🏢
+              </span>
+
+
+              <h2>
+                Officer
+              </h2>
+
+
+              <p>
+                Assign, track and resolve grievances.
+              </p>
+
+
+            </button>
+
 
           </div>
 
 
           <button
-            className="back-button"
+
+            className="secondary-button"
+
             onClick={() =>
-              setPage("login")
+              setPage(
+                "login"
+              )
             }
+
           >
+
             ← Back
+
           </button>
+
 
         </div>
 
       </div>
+
     );
+
   }
 
 
-  /* =========================================
-     CITIZEN / FARMER
-  ========================================= */
+  // =====================================
+  // USER DASHBOARD
+  // =====================================
 
-  if (page === "complaint") {
+  if (page === "user") {
 
     return (
 
-      <div className="dashboard-container">
+      <div className="dashboard">
 
-        <header className="top-header">
+
+        <header className="header">
+
 
           <div>
 
             <h1>
               ResolveAI
             </h1>
+
 
             <p>
               Intelligent Grievance Resolution
@@ -895,700 +1303,1200 @@ function App() {
           </div>
 
 
-          <div className="user-info">
+          <div className="header-user">
 
-            <span className="role-badge">
+            <span className="role-tag">
+
               {role === "Farmer"
                 ? "🌾 Farmer"
                 : "👤 Citizen"}
+
             </span>
 
-            <span>
+
+            <strong>
               {name}
-            </span>
+            </strong>
+
 
             <button
-              className="logout-button"
               onClick={logout}
             >
+
               Logout
+
             </button>
 
           </div>
+
 
         </header>
 
 
-        <main className="main-content">
+        <div className="content">
 
 
-          <div className="complaint-header">
-
-            <div>
-
-              <h2>
-                Submit a Grievance
-              </h2>
-
-              <p>
-                {role === "Farmer"
-                  ? "Report your agriculture or procurement-related issue."
-                  : "Report an issue and let AI prioritize it."}
-              </p>
-
-            </div>
+          <div className="tabs">
 
 
-            <div className="status-badge">
-              🧠 AI Enabled
-            </div>
+            <button
+
+              className={
+                activeTab === "submit"
+                  ? "active"
+                  : ""
+              }
+
+              onClick={() =>
+                setActiveTab(
+                  "submit"
+                )
+              }
+
+            >
+
+              📝 Submit Grievance
+
+            </button>
+
+
+            <button
+
+              className={
+                activeTab === "tracking"
+                  ? "active"
+                  : ""
+              }
+
+              onClick={() => {
+
+                setActiveTab(
+                  "tracking"
+                );
+
+
+                loadMyComplaints();
+
+              }}
+
+            >
+
+              📍 Track Grievances
+
+            </button>
+
+
+            {role === "Farmer" && (
+
+              <button
+
+                className={
+                  activeTab === "procurement"
+                    ? "active"
+                    : ""
+                }
+
+                onClick={() => {
+
+                  setActiveTab(
+                    "procurement"
+                  );
+
+
+                  loadCentres();
+
+                  loadBookings();
+
+                }}
+
+              >
+
+                🌾 Procurement Centres
+
+              </button>
+
+            )}
+
 
           </div>
 
 
-          <form
-            className="complaint-form"
-            onSubmit={
-              submitComplaint
-            }
-          >
+          {/* =============================
+              SUBMIT
+          ============================== */}
+
+          {activeTab === "submit" && (
+
+            <div className="panel">
 
 
-            <div className="form-section">
-
-              <h3>
-                Complaint Details
-              </h3>
-
-              <label>
-                Describe your complaint
-              </label>
-
-              <textarea
-                rows="6"
-                placeholder={
-                  role === "Farmer"
-                    ? "Example: My paddy procurement payment has been delayed for 10 days..."
-                    : "Example: Water pipeline is leaking near the market..."
-                }
-                value={complaintText}
-                onChange={(e) =>
-                  setComplaintText(
-                    e.target.value
-                  )
-                }
-              />
-
-            </div>
-
-
-            <div className="form-section">
-
-              <h3>
-                Evidence
-              </h3>
-
-              <p className="section-description">
-                Upload a photo related to the grievance.
-              </p>
-
-
-              <label className="upload-box">
-
-                <div className="upload-icon">
-                  📷
-                </div>
-
-                <strong>
-                  Click to upload image
-                </strong>
-
-                <span>
-                  JPG, PNG or JPEG
-                </span>
-
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg"
-                  onChange={
-                    handleImageUpload
-                  }
-                />
-
-              </label>
-
-
-              {imagePreview && (
-
-                <div className="image-preview">
-
-                  <img
-                    src={
-                      imagePreview
-                    }
-                    alt="Evidence"
-                  />
-
-                  <div>
-
-                    <strong>
-                      {image.name}
-                    </strong>
-
-                    <p>
-                      Evidence attached
-                    </p>
-
-                  </div>
-
-                </div>
-
-              )}
-
-            </div>
-
-
-            <div className="form-section">
-
-              <h3>
-                Location
-              </h3>
-
-              <p className="section-description">
-                Location helps officers identify geographically affected incidents.
-              </p>
-
-
-              <button
-                type="button"
-                className="location-button"
-                onClick={
-                  getCurrentLocation
-                }
-                disabled={
-                  locationLoading
-                }
-              >
-
-                {locationLoading
-                  ? "📍 Detecting..."
-                  : "📍 Use My Current Location"}
-
-              </button>
-
-
-              {locationName && (
-
-                <div className="location-result">
-
-                  <span>
-                    📍
-                  </span>
-
-                  <div>
-
-                    <strong>
-                      Detected Location
-                    </strong>
-
-                    <p>
-                      {locationName}
-                    </p>
-
-                  </div>
-
-                </div>
-
-              )}
-
-
-              <label>
-                Location Name / Address
-              </label>
-
-              <input
-                type="text"
-                placeholder="Example: Vijayawada, Andhra Pradesh"
-                value={locationName}
-                onChange={(e) =>
-                  setLocationName(
-                    e.target.value
-                  )
-                }
-              />
-
-            </div>
-
-
-            <button
-              type="submit"
-              className="submit-button"
-              disabled={loading}
-            >
-
-              {loading
-                ? "🧠 AI Analyzing..."
-                : "Submit Complaint →"}
-
-            </button>
-
-          </form>
-
-
-          {result && (
-
-            <div className="result-card">
-
-              <div className="result-header">
+              <div className="panel-heading">
 
                 <div>
 
-                  <span className="success-label">
-                    ✓ Complaint Submitted
-                  </span>
-
                   <h2>
-                    AI Analysis
+                    Submit a Grievance
                   </h2>
 
+
+                  <p>
+
+                    {role === "Farmer"
+
+                      ? "Report procurement, crop or payment-related issues."
+
+                      : "Report a public issue and let AI prioritize it."
+
+                    }
+
+                  </p>
+
                 </div>
 
-                <div className="complaint-id">
-                  #{result.id}
-                </div>
+
+                <span className="ai-badge">
+
+                  🧠 AI Enabled
+
+                </span>
 
               </div>
 
 
-              <div className="result-grid">
+              <form
+                onSubmit={submitComplaint}
+              >
 
 
-                <div className="result-item">
+                <label>
+                  Describe your grievance
+                </label>
 
-                  <span>
-                    Category
-                  </span>
 
-                  <strong>
-                    {result.category}
-                  </strong>
+                <textarea
+
+                  rows="7"
+
+                  placeholder={
+
+                    role === "Farmer"
+
+                      ? "Example: My paddy procurement payment has been delayed..."
+
+                      : "Example: Water pipeline is leaking near the market..."
+
+                  }
+
+                  value={complaintText}
+
+                  onChange={(e) =>
+
+                    setComplaintText(
+                      e.target.value
+                    )
+
+                  }
+
+                />
+
+
+                <div className="section-card">
+
+
+                  <h3>
+                    📍 Location
+                  </h3>
+
+
+                  <p>
+
+                    Share your current location
+                    to help authorities identify the issue.
+
+                  </p>
+
+
+                  <button
+
+                    type="button"
+
+                    className="location-button"
+
+                    onClick={getCurrentLocation}
+
+                  >
+
+                    {locationLoading
+
+                      ? "Getting location..."
+
+                      : "📍 Use Current Location"
+
+                    }
+
+                  </button>
+
+
+                  {locationName && (
+
+                    <div className="location-result">
+
+                      <strong>
+                        Selected Location:
+                      </strong>
+
+                      <p>
+                        {locationName}
+                      </p>
+
+                    </div>
+
+                  )}
+
 
                 </div>
 
 
-                <div className="result-item">
+                <div className="section-card">
 
-                  <span>
-                    Priority
-                  </span>
 
-                  <strong>
-                    {result.severity}
-                  </strong>
+                  <h3>
+                    📷 Evidence
+                  </h3>
+
+
+                  <label className="upload-area">
+
+
+                    Upload Image
+
+
+                    <input
+
+                      type="file"
+
+                      accept="image/*"
+
+                      onChange={handleImageUpload}
+
+                    />
+
+
+                  </label>
+
+
+                  {imagePreview && (
+
+                    <img
+
+                      className="image-preview"
+
+                      src={imagePreview}
+
+                      alt="Evidence"
+
+                    />
+
+                  )}
+
 
                 </div>
 
 
-                <div className="result-item">
+                <button
 
-                  <span>
-                    Priority Score
-                  </span>
+                  className="primary-button"
 
-                  <strong>
-                    {result.priority_score} / 100
-                  </strong>
+                  type="submit"
 
-                </div>
+                  disabled={loading}
 
+                >
 
-                <div className="result-item">
+                  {loading
 
-                  <span>
-                    Department
-                  </span>
+                    ? "Submitting..."
 
-                  <strong>
-                    {result.department}
-                  </strong>
+                    : "Submit Grievance"
 
-                </div>
+                  }
+
+                </button>
 
 
-                <div className="result-item">
-
-                  <span>
-                    SLA
-                  </span>
-
-                  <strong>
-                    {result.sla_hours} hours
-                  </strong>
-
-                </div>
+              </form>
 
 
-                <div className="result-item">
+              {result && (
 
-                  <span>
-                    Incident
-                  </span>
+                <div className="success-result">
 
-                  <strong>
-                    {result.master_incident_id
-                      ? `Incident #${result.master_incident_id}`
-                      : "New Incident"}
-                  </strong>
 
-                </div>
+                  <h3>
+                    ✅ Grievance Submitted
+                  </h3>
+
+
+                  <div className="result-grid">
+
+
+                    <div>
+
+                      <span>
+                        Complaint ID
+                      </span>
+
+                      <strong>
+                        #{result.id}
+                      </strong>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Category
+                      </span>
+
+                      <strong>
+                        {result.category}
+                      </strong>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Priority
+                      </span>
+
+                      <strong>
+                        {result.severity}
+                      </strong>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Department
+                      </span>
+
+                      <strong>
+                        {result.department}
+                      </strong>
+
+                    </div>
+
+
+                  </div>
+
+
+                  <p>
+
+                    You can now track officer assignment
+                    and work progress from the
+                    <strong>
+                      {" "}Track Grievances
+                    </strong>
+                    {" "}section.
+
+                  </p>
+
 
               </div>
 
+              )}
 
-              <div className="success-message">
-
-                Your complaint has been analyzed and automatically routed to the appropriate department.
-
-              </div>
 
             </div>
 
           )}
 
-        </main>
+
+          {/* =============================
+              TRACKING
+          ============================== */}
+
+          {activeTab === "tracking" && (
+
+            <div className="panel">
+
+
+              <div className="panel-heading">
+
+                <div>
+
+                  <h2>
+                    Track Your Grievances
+                  </h2>
+
+
+                  <p>
+
+                    See officer assignment,
+                    work progress and resolution status.
+
+                  </p>
+
+                </div>
+
+
+                <button
+
+                  className="secondary-button"
+
+                  onClick={loadMyComplaints}
+
+                >
+
+                  🔄 Refresh
+
+                </button>
+
+
+              </div>
+
+
+              {trackingLoading && (
+
+                <p>
+                  Loading your grievances...
+                </p>
+
+              )}
+
+
+              {!trackingLoading &&
+                myComplaints.length === 0 && (
+
+                  <div className="empty-state">
+
+                    <h3>
+                      No grievances found
+                    </h3>
+
+
+                    <p>
+                      Submit a grievance to start tracking.
+                    </p>
+
+                  </div>
+
+                )}
+
+
+              <div className="tracking-list">
+
+
+                {myComplaints.map(
+
+                  (complaint) => (
+
+                    <div
+
+                      className="tracking-card"
+
+                      key={complaint.id}
+
+                    >
+
+
+                      <div className="tracking-top">
+
+
+                        <div>
+
+                          <h3>
+
+                            Complaint
+                            {" "}
+                            #{complaint.id}
+
+                          </h3>
+
+
+                          <p>
+                            {complaint.complaint_text}
+                          </p>
+
+                        </div>
+
+
+                        <span
+
+                          className={
+                            getStatusClass(
+                              complaint.status
+                            )
+                          }
+
+                        >
+
+                          {complaint.status}
+
+                        </span>
+
+
+                      </div>
+
+
+                      <div className="tracking-grid">
+
+
+                        <div>
+
+                          <span>
+                            Department
+                          </span>
+
+
+                          <strong>
+                            {complaint.department}
+                          </strong>
+
+                        </div>
+
+
+                        <div>
+
+                          <span>
+                            Priority
+                          </span>
+
+
+                          <strong>
+                            {complaint.severity}
+                          </strong>
+
+                        </div>
+
+
+                        <div>
+
+                          <span>
+                            Officer Assigned
+                          </span>
+
+
+                          <strong>
+
+                            {complaint.assigned_officer
+
+                              ? `👨‍💼 ${complaint.assigned_officer}`
+
+                              : "⏳ Not Assigned Yet"
+
+                            }
+
+                          </strong>
+
+                        </div>
+
+
+                        <div>
+
+                          <span>
+                            Location
+                          </span>
+
+
+                          <strong>
+
+                            {complaint.location_name ||
+
+                              "Location not provided"
+
+                            }
+
+                          </strong>
+
+                        </div>
+
+
+                      </div>
+
+
+                      <div className="progress-section">
+
+
+                        <div className="progress-label">
+
+                          <strong>
+                            Officer Work Progress
+                          </strong>
+
+
+                          <strong>
+
+                            {complaint.officer_progress || 0}%
+
+                          </strong>
+
+                        </div>
+
+
+                        <div className="progress-bar">
+
+                          <div
+
+                            className="progress-fill"
+
+                            style={{
+
+                              width:
+
+                                `${complaint.officer_progress || 0}%`
+
+                            }}
+
+                          />
+
+                        </div>
+
+
+                        <p className="progress-note">
+
+                          {complaint.progress_note ||
+
+                            "No progress update has been added yet."
+
+                          }
+
+                        </p>
+
+
+                      </div>
+
+
+                      <div className="timeline">
+
+
+                        <div className="timeline-step completed">
+
+                          ✓ Submitted
+
+                        </div>
+
+
+                        <div
+
+                          className={
+
+                            complaint.assigned_officer
+
+                              ? "timeline-step completed"
+
+                              : "timeline-step"
+
+                          }
+
+                        >
+
+                          👨‍💼 Officer Assigned
+
+                        </div>
+
+
+                        <div
+
+                          className={
+
+                            (complaint.officer_progress || 0) > 0
+
+                              ? "timeline-step completed"
+
+                              : "timeline-step"
+
+                          }
+
+                        >
+
+                          🔧 Work In Progress
+
+                        </div>
+
+
+                        <div
+
+                          className={
+
+                            complaint.status === "Resolved"
+
+                              ? "timeline-step completed"
+
+                              : "timeline-step"
+
+                          }
+
+                        >
+
+                          ✅ Resolved
+
+                        </div>
+
+
+                      </div>
+
+
+                      {complaint.master_incident_id && (
+
+                        <div className="incident-box">
+
+                          🔗 Related to Master Incident
+                          {" "}
+                          #{complaint.master_incident_id}
+
+                        </div>
+
+                      )}
+
+
+                    </div>
+
+                  )
+
+                )}
+
+
+              </div>
+
+
+            </div>
+
+          )}
+
+
+          {/* =============================
+              PROCUREMENT
+          ============================== */}
+
+          {activeTab === "procurement" && (
+
+            <div className="panel">
+
+
+              <div className="panel-heading">
+
+                <div>
+
+                  <h2>
+                    Farmer Procurement
+                  </h2>
+
+
+                  <p>
+
+                    Find available procurement centres
+                    and book a convenient slot.
+
+                  </p>
+
+                </div>
+
+
+                <button
+
+                  className="secondary-button"
+
+                  onClick={() => {
+
+                    loadCentres();
+
+                    loadBookings();
+
+                  }}
+
+                >
+
+                  🔄 Refresh
+
+                </button>
+
+
+              </div>
+
+
+              <div className="booking-form">
+
+
+                <div>
+
+                  <label>
+                    Crop Type
+                  </label>
+
+
+                  <select
+
+                    value={cropType}
+
+                    onChange={(e) =>
+
+                      setCropType(
+                        e.target.value
+                      )
+
+                    }
+
+                  >
+
+                    <option>
+                      Paddy
+                    </option>
+
+                    <option>
+                      Maize
+                    </option>
+
+                    <option>
+                      Cotton
+                    </option>
+
+                    <option>
+                      Chilli
+                    </option>
+
+                  </select>
+
+                </div>
+
+
+                <div>
+
+                  <label>
+                    Estimated Quantity
+                  </label>
+
+
+                  <input
+
+                    placeholder="Example: 50 Quintals"
+
+                    value={quantity}
+
+                    onChange={(e) =>
+
+                      setQuantity(
+                        e.target.value
+                      )
+
+                    }
+
+                  />
+
+                </div>
+
+
+              </div>
+
+
+              <h3 className="section-title">
+
+                📍 Available Procurement Centres
+
+              </h3>
+
+
+              {centresLoading && (
+
+                <p>
+                  Loading centres...
+                </p>
+
+              )}
+
+
+              <div className="centres-grid">
+
+
+                {centres.map(
+
+                  (centre) => (
+
+                    <div
+
+                      className="centre-card"
+
+                      key={centre.id}
+
+                    >
+
+
+                      <h3>
+
+                        🏢
+                        {" "}
+                        {centre.name}
+
+                      </h3>
+
+
+                      <p>
+
+                        📍
+                        {" "}
+                        {centre.location}
+
+                      </p>
+
+
+                      <p>
+
+                        📞
+                        {" "}
+                        {centre.contact}
+
+                      </p>
+
+
+                      <p>
+
+                        🌾 Crops:
+                        {" "}
+
+                        {centre.crops.join(
+                          ", "
+                        )}
+
+                      </p>
+
+
+                      <h4>
+
+                        Available Slots
+
+                      </h4>
+
+
+                      <div className="slots-list">
+
+
+                        {centre.slots.map(
+
+                          (slot, index) => (
+
+                            <div
+
+                              className="slot-row"
+
+                              key={index}
+
+                            >
+
+
+                              <div>
+
+                                <strong>
+
+                                  {slot.date}
+
+                                </strong>
+
+
+                                <p>
+
+                                  {slot.time}
+
+                                </p>
+
+                              </div>
+
+
+                              <div className="slot-action">
+
+
+                                <span
+
+                                  className={
+
+                                    slot.available > 0
+
+                                      ? "available"
+
+                                      : "full"
+
+                                  }
+
+                                >
+
+                                  {slot.available > 0
+
+                                    ? `${slot.available} Slots Available`
+
+                                    : "Full"
+
+                                  }
+
+                                </span>
+
+
+                                <button
+
+                                  disabled={
+
+                                    slot.available <= 0 ||
+
+                                    bookingLoading
+
+                                  }
+
+                                  onClick={() =>
+
+                                    bookSlot(
+
+                                      centre,
+
+                                      slot
+
+                                    )
+
+                                  }
+
+                                >
+
+                                  Book
+
+                                </button>
+
+
+                              </div>
+
+
+                            </div>
+
+                          )
+
+                        )}
+
+
+                      </div>
+
+
+                    </div>
+
+                  )
+
+                )}
+
+
+              </div>
+
+
+              <h3 className="section-title">
+
+                📋 My Procurement Bookings
+
+              </h3>
+
+
+              {bookings.length === 0 && (
+
+                <div className="empty-state">
+
+                  No procurement slots booked yet.
+
+                </div>
+
+              )}
+
+
+              <div className="booking-list">
+
+
+                {bookings.map(
+
+                  (booking) => (
+
+                    <div
+
+                      className="booking-card"
+
+                      key={booking.id}
+
+                    >
+
+
+                      <div>
+
+                        <h3>
+                          {booking.centre_name}
+                        </h3>
+
+
+                        <p>
+                          📍 {booking.location}
+                        </p>
+
+
+                        <p>
+                          🌾 {booking.crop_type}
+                        </p>
+
+                      </div>
+
+
+                      <div>
+
+                        <strong>
+                          {booking.slot_date}
+                        </strong>
+
+
+                        <p>
+                          {booking.slot_time}
+                        </p>
+
+
+                        <span className="status booked">
+
+                          {booking.status}
+
+                        </span>
+
+                      </div>
+
+
+                    </div>
+
+                  )
+
+                )}
+
+
+              </div>
+
+
+            </div>
+
+          )}
+
+
+        </div>
 
       </div>
+
     );
+
   }
 
 
-  /* =========================================
-     OFFICER DASHBOARD
-  ========================================= */
+  // =====================================
+  // OFFICER DASHBOARD
+  // =====================================
 
   if (page === "officer") {
 
-
-    /* =====================================
-       BASIC COUNTS
-    ===================================== */
-
-    const total =
-      complaints.length;
-
-
-    const critical =
-      complaints.filter(
-        c =>
-          c.severity ===
-          "CRITICAL"
-      ).length;
-
-
-    const high =
-      complaints.filter(
-        c =>
-          c.severity ===
-          "HIGH"
-      ).length;
-
-
-    const farmers =
-      complaints.filter(
-        c =>
-          c.category ===
-          "Agriculture & Procurement"
-      ).length;
-
-
-    const escalated =
-      complaints.filter(
-        c =>
-          c.escalated
-      ).length;
-
-
-    const resolved =
-      complaints.filter(
-        c =>
-          c.status ===
-          "Resolved"
-      ).length;
-
-
-    const resolutionRate =
-      total > 0
-        ? Math.round(
-            (resolved / total) *
-            100
-          )
-        : 0;
-
-
-    const incidentSet =
-      new Set(
-        complaints.map(
-          c =>
-            c.master_incident_id
-              ? c.master_incident_id
-              : c.id
-        )
-      );
-
-
-    const masterIncidents =
-      incidentSet.size;
-
-
-    /* =====================================
-       FILTER
-    ===================================== */
-
-    const filteredComplaints =
-      complaints.filter(
-        complaint => {
-
-          const searchText =
-            search.toLowerCase();
-
-
-          const matchesSearch =
-
-            complaint.name
-              ?.toLowerCase()
-              .includes(searchText)
-
-            ||
-
-            complaint.complaint_text
-              ?.toLowerCase()
-              .includes(searchText)
-
-            ||
-
-            complaint.category
-              ?.toLowerCase()
-              .includes(searchText);
-
-
-          const matchesPriority =
-            priorityFilter === "All"
-              ||
-            complaint.severity ===
-              priorityFilter;
-
-
-          const matchesStatus =
-            statusFilter === "All"
-              ||
-            complaint.status ===
-              statusFilter;
-
-
-          return (
-            matchesSearch &&
-            matchesPriority &&
-            matchesStatus
-          );
-        }
-      );
-
-
-    /* =====================================
-       ANALYTICS DATA
-    ===================================== */
-
-    const categoryNames = [
-
-      "Water Supply",
-
-      "Roads & Infrastructure",
-
-      "Electricity",
-
-      "Agriculture & Procurement",
-
-      "Healthcare",
-
-      "Education",
-
-      "General"
-
-    ];
-
-
-    const categoryData =
-      categoryNames.map(
-        category => ({
-
-          name:
-            category ===
-            "Agriculture & Procurement"
-              ? "Agriculture"
-              : category,
-
-          complaints:
-            complaints.filter(
-              c =>
-                c.category ===
-                category
-            ).length
-
-        })
-      );
-
-
-    const priorityData = [
-
-      {
-        name: "Critical",
-
-        value:
-          complaints.filter(
-            c =>
-              c.severity ===
-              "CRITICAL"
-          ).length
-      },
-
-      {
-        name: "High",
-
-        value:
-          complaints.filter(
-            c =>
-              c.severity ===
-              "HIGH"
-          ).length
-      },
-
-      {
-        name: "Medium",
-
-        value:
-          complaints.filter(
-            c =>
-              c.severity ===
-              "MEDIUM"
-          ).length
-      },
-
-      {
-        name: "Low",
-
-        value:
-          complaints.filter(
-            c =>
-              c.severity ===
-              "LOW"
-          ).length
-      }
-
-    ];
-
-
-    const statusData = [
-
-      {
-        name: "Submitted",
-
-        value:
-          complaints.filter(
-            c =>
-              c.status ===
-              "Submitted"
-          ).length
-      },
-
-      {
-        name: "Assigned",
-
-        value:
-          complaints.filter(
-            c =>
-              c.status ===
-              "Assigned"
-          ).length
-      },
-
-      {
-        name: "In Progress",
-
-        value:
-          complaints.filter(
-            c =>
-              c.status ===
-              "In Progress"
-          ).length
-      },
-
-      {
-        name: "Escalated",
-
-        value:
-          complaints.filter(
-            c =>
-              c.status ===
-              "Escalated"
-          ).length
-      },
-
-      {
-        name: "Resolved",
-
-        value:
-          complaints.filter(
-            c =>
-              c.status ===
-              "Resolved"
-          ).length
-      }
-
-    ];
-
-
-    const priorityColors = [
-      "#c62828",
-      "#e67e22",
-      "#d1a400",
-      "#249447"
-    ];
-
-
-    /* =====================================
-       MAP
-    ===================================== */
-
-    const mapComplaints =
-      filteredComplaints.filter(
-        c =>
-          c.latitude !== null &&
-          c.longitude !== null &&
-          c.latitude !== undefined &&
-          c.longitude !== undefined
-      );
-
-
-    const mapCenter =
-      mapComplaints.length > 0
-        ? [
-            mapComplaints[0].latitude,
-            mapComplaints[0].longitude
-          ]
-        : [
-            16.5062,
-            80.6480
-          ];
-
-
     return (
 
-      <div className="dashboard-container">
+      <div className="dashboard">
 
 
-        {/* HEADER */}
+        <header className="header">
 
-        <header className="top-header">
 
           <div>
 
@@ -1596,1402 +2504,746 @@ function App() {
               ResolveAI
             </h1>
 
+
             <p>
-              Officer Command Dashboard
+              Officer Management Dashboard
             </p>
 
           </div>
 
 
-          <div className="user-info">
+          <div className="header-user">
 
-            <span className="role-badge officer-badge">
+            <span className="role-tag">
+
               🏢 Officer
+
             </span>
 
-            <span>
+
+            <strong>
               {name}
-            </span>
+            </strong>
+
 
             <button
-              className="logout-button"
               onClick={logout}
             >
+
               Logout
+
             </button>
 
           </div>
 
+
         </header>
 
 
-        <main className="officer-main">
+        <div className="content">
 
 
-          {/* TITLE */}
-
-          <div className="dashboard-title">
-
-            <div>
-
-              <h2>
-                Grievance Intelligence Center
-              </h2>
-
-              <p>
-                AI-powered monitoring, prioritization, incident clustering and resolution.
-              </p>
-
-            </div>
+          <div className="officer-actions">
 
 
-            <div className="dashboard-actions">
+            <button
 
-              <button
-                className="refresh-button"
-                onClick={
-                  loadComplaints
+              className="primary-button"
+
+              onClick={loadAllComplaints}
+
+            >
+
+              🔄 Refresh Complaints
+
+            </button>
+
+
+            <button
+
+              className="secondary-button"
+
+              onClick={async () => {
+
+                try {
+
+                  const response =
+
+                    await axios.post(
+
+                      `${API_URL}/sla/check`
+
+                    );
+
+
+                  alert(
+
+                    `SLA Check Completed. New escalations: ${response.data.new_escalations}`
+
+                  );
+
+
+                  loadAllComplaints();
+
+                } catch {
+
+                  alert(
+                    "Unable to run SLA check."
+                  );
+
                 }
-              >
-                ↻ Refresh
-              </button>
 
+              }}
 
-              <button
-                className="sla-button"
-                onClick={
-                  runSlaCheck
-                }
-              >
-                ⏱️ Run SLA Check
-              </button>
+            >
 
-            </div>
+              ⏱ Run SLA Check
+
+            </button>
+
 
           </div>
 
-
-          {/* =================================
-              KPI CARDS
-          ================================= */}
 
           <div className="stats-grid">
 
 
-            <div className="stat-card blue-card">
+            <div className="stat-card">
 
-              <span className="stat-icon">
-                📋
+              <span>
+                Total Complaints
               </span>
 
-              <div>
 
-                <p>
-                  Total Complaints
-                </p>
-
-                <h3>
-                  {total}
-                </h3>
-
-              </div>
+              <h2>
+                {complaints.length}
+              </h2>
 
             </div>
 
 
-            <div className="stat-card critical-card">
+            <div className="stat-card">
 
-              <span className="stat-icon">
-                🚨
+              <span>
+                Assigned
               </span>
 
-              <div>
 
-                <p>
-                  Critical
-                </p>
+              <h2>
 
-                <h3>
-                  {critical}
-                </h3>
+                {
 
-              </div>
+                  complaints.filter(
+
+                    (c) =>
+                      c.assigned_officer
+
+                  ).length
+
+                }
+
+              </h2>
 
             </div>
 
 
-            <div className="stat-card high-card">
+            <div className="stat-card">
 
-              <span className="stat-icon">
-                ⚠️
+              <span>
+                In Progress
               </span>
 
-              <div>
 
-                <p>
-                  High Priority
-                </p>
+              <h2>
 
-                <h3>
-                  {high}
-                </h3>
+                {
 
-              </div>
+                  complaints.filter(
+
+                    (c) =>
+                      c.status ===
+                      "In Progress"
+
+                  ).length
+
+                }
+
+              </h2>
 
             </div>
 
 
-            <div className="stat-card farmer-card">
+            <div className="stat-card">
 
-              <span className="stat-icon">
-                🌾
+              <span>
+                Resolved
               </span>
 
-              <div>
 
-                <p>
-                  Farmer Issues
-                </p>
+              <h2>
 
-                <h3>
-                  {farmers}
-                </h3>
+                {
 
-              </div>
+                  complaints.filter(
+
+                    (c) =>
+                      c.status ===
+                      "Resolved"
+
+                  ).length
+
+                }
+
+              </h2>
 
             </div>
 
-
-            <div className="stat-card incident-card">
-
-              <span className="stat-icon">
-                🔗
-              </span>
-
-              <div>
-
-                <p>
-                  Master Incidents
-                </p>
-
-                <h3>
-                  {masterIncidents}
-                </h3>
-
-              </div>
-
-            </div>
-
-
-            <div className="stat-card escalation-card">
-
-              <span className="stat-icon">
-                ⏱️
-              </span>
-
-              <div>
-
-                <p>
-                  Escalated
-                </p>
-
-                <h3>
-                  {escalated}
-                </h3>
-
-              </div>
-
-            </div>
-
-
-            <div className="stat-card resolved-card">
-
-              <span className="stat-icon">
-                ✅
-              </span>
-
-              <div>
-
-                <p>
-                  Resolution Rate
-                </p>
-
-                <h3>
-                  {resolutionRate}%
-                </h3>
-
-              </div>
-
-            </div>
 
           </div>
 
 
-          {/* =================================
-              ANALYTICS
-          ================================= */}
+          <div className="panel">
 
-          <section className="analytics-section">
 
-            <div className="section-heading">
+            <div className="panel-heading">
 
               <div>
 
                 <h2>
-                  📊 Analytics & Insights
+                  Complaint Management
                 </h2>
 
+
                 <p>
-                  Understand complaint trends and operational performance.
+
+                  Assign officers and update work progress.
+
                 </p>
 
               </div>
 
+
+              {dashboardLoading && (
+
+                <span>
+                  Loading...
+                </span>
+
+              )}
+
+
             </div>
 
 
-            <div className="analytics-grid">
+            <div className="complaints-table">
 
 
-              {/* CATEGORY */}
+              {complaints.map(
 
-              <div className="chart-card">
+                (complaint) => (
 
-                <h3>
-                  Complaints by Category
-                </h3>
+                  <div
 
-                <ResponsiveContainer
-                  width="100%"
-                  height={300}
-                >
+                    className="officer-complaint-card"
 
-                  <BarChart
-                    data={
-                      categoryData
-                    }
+                    key={complaint.id}
+
                   >
 
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                    />
 
-                    <XAxis
-                      dataKey="name"
-                      tick={{
-                        fontSize: 10
-                      }}
-                      angle={-20}
-                      textAnchor="end"
-                      height={70}
-                    />
-
-                    <YAxis
-                      allowDecimals={false}
-                    />
-
-                    <Tooltip />
-
-                    <Bar
-                      dataKey="complaints"
-                      fill="#1976d2"
-                      radius={[
-                        5,
-                        5,
-                        0,
-                        0
-                      ]}
-                    />
-
-                  </BarChart>
-
-                </ResponsiveContainer>
-
-              </div>
+                    <div className="complaint-info">
 
 
-              {/* PRIORITY */}
+                      <div className="complaint-title-row">
 
-              <div className="chart-card">
+                        <h3>
 
-                <h3>
-                  Priority Distribution
-                </h3>
+                          #{complaint.id}
+                          {" "}
+                          {complaint.category}
 
-                <ResponsiveContainer
-                  width="100%"
-                  height={300}
-                >
+                        </h3>
 
-                  <PieChart>
 
-                    <Pie
-                      data={
-                        priorityData
-                      }
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      label
-                    >
+                        <span
 
-                      {priorityData.map(
-                        (entry, index) => (
+                          className={
+                            getStatusClass(
+                              complaint.status
+                            )
+                          }
 
-                          <Cell
-                            key={
-                              index
-                            }
-                            fill={
-                              priorityColors[
-                                index
-                              ]
-                            }
+                        >
+
+                          {complaint.status}
+
+                        </span>
+
+
+                      </div>
+
+
+                      <p>
+
+                        {complaint.complaint_text}
+
+                      </p>
+
+
+                      <div className="complaint-meta">
+
+
+                        <span>
+
+                          👤
+                          {" "}
+                          {complaint.name}
+
+                        </span>
+
+
+                        <span>
+
+                          📍
+                          {" "}
+
+                          {complaint.location_name ||
+
+                            "No location"
+
+                          }
+
+                        </span>
+
+
+                        <span>
+
+                          🎯
+                          {" "}
+
+                          {complaint.severity}
+
+                        </span>
+
+
+                        <span>
+
+                          🏢
+                          {" "}
+
+                          {complaint.department}
+
+                        </span>
+
+
+                      </div>
+
+
+                      <div className="mini-progress">
+
+
+                        <span>
+
+                          Officer:
+
+                          {" "}
+
+                          {complaint.assigned_officer ||
+
+                            "Not Assigned"
+
+                          }
+
+                        </span>
+
+
+                        <div className="progress-bar">
+
+                          <div
+
+                            className="progress-fill"
+
+                            style={{
+
+                              width:
+
+                                `${complaint.officer_progress || 0}%`
+
+                            }}
+
                           />
-
-                        )
-                      )}
-
-                    </Pie>
-
-                    <Tooltip />
-
-                    <Legend />
-
-                  </PieChart>
-
-                </ResponsiveContainer>
-
-              </div>
-
-
-              {/* STATUS */}
-
-              <div className="chart-card">
-
-                <h3>
-                  Resolution Status
-                </h3>
-
-                <ResponsiveContainer
-                  width="100%"
-                  height={300}
-                >
-
-                  <BarChart
-                    data={
-                      statusData
-                    }
-                    layout="vertical"
-                  >
-
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                    />
-
-                    <XAxis
-                      type="number"
-                      allowDecimals={false}
-                    />
-
-                    <YAxis
-                      type="category"
-                      dataKey="name"
-                      width={90}
-                    />
-
-                    <Tooltip />
-
-                    <Bar
-                      dataKey="value"
-                      fill="#249447"
-                      radius={[
-                        0,
-                        5,
-                        5,
-                        0
-                      ]}
-                    />
-
-                  </BarChart>
-
-                </ResponsiveContainer>
-
-              </div>
-
-
-              {/* FARMER INSIGHT */}
-
-              <div className="insight-card">
-
-                <div className="insight-icon">
-                  🌾
-                </div>
-
-                <h3>
-                  Farmer Procurement Intelligence
-                </h3>
-
-                <p>
-                  ResolveAI separately tracks agriculture and procurement grievances to help officers identify recurring farmer issues.
-                </p>
-
-
-                <div className="insight-number">
-                  {farmers}
-                </div>
-
-                <span>
-                  Farmer-related complaints
-                </span>
-
-
-                <div className="insight-row">
-
-                  <div>
-
-                    <strong>
-                      {complaints.filter(
-                        c =>
-                          c.category ===
-                          "Agriculture & Procurement" &&
-                          c.status ===
-                          "Resolved"
-                      ).length}
-                    </strong>
-
-                    <span>
-                      Resolved
-                    </span>
-
-                  </div>
-
-
-                  <div>
-
-                    <strong>
-                      {complaints.filter(
-                        c =>
-                          c.category ===
-                          "Agriculture & Procurement" &&
-                          c.escalated
-                      ).length}
-                    </strong>
-
-                    <span>
-                      Escalated
-                    </span>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </section>
-
-
-          {/* =================================
-              MAP
-          ================================= */}
-
-          <div className="map-card">
-
-            <div className="map-header">
-
-              <div>
-
-                <h3>
-                  🗺️ Geographic Complaint Intelligence
-                </h3>
-
-                <p>
-                  Identify clusters and high-priority complaints by location.
-                </p>
-
-              </div>
-
-
-              <div className="map-legend">
-
-                <span>
-                  🔴 Critical
-                </span>
-
-                <span>
-                  🟠 High
-                </span>
-
-                <span>
-                  🟡 Medium
-                </span>
-
-                <span>
-                  🟢 Low
-                </span>
-
-              </div>
-
-            </div>
-
-
-            <div className="map-container">
-
-              <MapContainer
-                center={
-                  mapCenter
-                }
-                zoom={12}
-                scrollWheelZoom={true}
-                style={{
-                  height: "100%",
-                  width: "100%"
-                }}
-              >
-
-                <TileLayer
-                  attribution='&copy; OpenStreetMap contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-
-
-                {mapComplaints.map(
-                  complaint => (
-
-                    <Marker
-                      key={
-                        complaint.id
-                      }
-                      position={[
-                        complaint.latitude,
-                        complaint.longitude
-                      ]}
-                    >
-
-                      <Popup>
-
-                        <div className="popup-content">
-
-                          <h4>
-                            Complaint #
-                            {complaint.id}
-                          </h4>
-
-                          <p>
-                            <strong>
-                              Priority:
-                            </strong>{" "}
-                            {complaint.severity}
-                          </p>
-
-                          <p>
-                            <strong>
-                              Score:
-                            </strong>{" "}
-                            {complaint.priority_score}
-                          </p>
-
-                          <p>
-                            <strong>
-                              Category:
-                            </strong>{" "}
-                            {complaint.category}
-                          </p>
-
-                          <p>
-                            <strong>
-                              Status:
-                            </strong>{" "}
-                            {complaint.status}
-                          </p>
-
-                          <p>
-                            {complaint.complaint_text}
-                          </p>
 
                         </div>
 
-                      </Popup>
 
-                    </Marker>
+                        <strong>
 
-                  )
-                )}
+                          {complaint.officer_progress || 0}%
 
-              </MapContainer>
+                        </strong>
 
-            </div>
 
-          </div>
+                      </div>
 
 
-          {/* =================================
-              FILTERS
-          ================================= */}
+                    </div>
 
-          <div className="control-panel">
 
-            <div className="search-box">
+                    <div className="complaint-actions">
 
-              🔎
 
-              <input
-                type="text"
-                placeholder="Search name, complaint or category..."
-                value={search}
-                onChange={(e) =>
-                  setSearch(
-                    e.target.value
-                  )
-                }
-              />
+                      <button
 
-            </div>
+                        className="primary-button small"
 
+                        onClick={() =>
 
-            <select
-              value={
-                priorityFilter
-              }
-              onChange={(e) =>
-                setPriorityFilter(
-                  e.target.value
-                )
-              }
-            >
+                          openOfficerUpdate(
+                            complaint
+                          )
 
-              <option value="All">
-                All Priorities
-              </option>
+                        }
 
-              <option value="CRITICAL">
-                Critical
-              </option>
+                      >
 
-              <option value="HIGH">
-                High
-              </option>
+                        👨‍💼 Assign / Update
 
-              <option value="MEDIUM">
-                Medium
-              </option>
+                      </button>
 
-              <option value="LOW">
-                Low
-              </option>
 
-            </select>
+                      {complaint.master_incident_id && (
 
+                        <button
 
-            <select
-              value={
-                statusFilter
-              }
-              onChange={(e) =>
-                setStatusFilter(
-                  e.target.value
-                )
-              }
-            >
+                          className="secondary-button small"
 
-              <option value="All">
-                All Status
-              </option>
+                          onClick={() =>
 
-              <option value="Submitted">
-                Submitted
-              </option>
+                            openIncident(
 
-              <option value="Assigned">
-                Assigned
-              </option>
+                              complaint.master_incident_id
 
-              <option value="In Progress">
-                In Progress
-              </option>
+                            )
 
-              <option value="Escalated">
-                Escalated
-              </option>
-
-              <option value="Reopened">
-                Reopened
-              </option>
-
-              <option value="Resolved">
-                Resolved
-              </option>
-
-            </select>
-
-          </div>
-
-
-          {/* =================================
-              COMPLAINT TABLE
-          ================================= */}
-
-          <div className="table-card">
-
-            <div className="table-header">
-
-              <div>
-
-                <h3>
-                  AI-Prioritized Complaint Queue
-                </h3>
-
-                <p>
-                  Click an incident to inspect related complaints.
-                </p>
-
-              </div>
-
-              <span className="complaint-count">
-                {filteredComplaints.length} Records
-              </span>
-
-            </div>
-
-
-            {dashboardLoading ? (
-
-              <div className="empty-state">
-                Loading complaints...
-              </div>
-
-            ) : filteredComplaints.length === 0 ? (
-
-              <div className="empty-state">
-
-                <div className="empty-icon">
-                  📭
-                </div>
-
-                <h3>
-                  No complaints found
-                </h3>
-
-                <p>
-                  Submit complaints through the Citizen or Farmer portal.
-                </p>
-
-              </div>
-
-            ) : (
-
-              <div className="table-wrapper">
-
-                <table>
-
-                  <thead>
-
-                    <tr>
-
-                      <th>
-                        ID
-                      </th>
-
-                      <th>
-                        Complainant
-                      </th>
-
-                      <th>
-                        Complaint
-                      </th>
-
-                      <th>
-                        Category
-                      </th>
-
-                      <th>
-                        Priority
-                      </th>
-
-                      <th>
-                        Score
-                      </th>
-
-                      <th>
-                        SLA
-                      </th>
-
-                      <th>
-                        Incident
-                      </th>
-
-                      <th>
-                        Status
-                      </th>
-
-                      <th>
-                        Verification
-                      </th>
-
-                    </tr>
-
-                  </thead>
-
-
-                  <tbody>
-
-                    {filteredComplaints.map(
-                      complaint => (
-
-                        <tr
-                          key={
-                            complaint.id
                           }
+
                         >
 
-                          <td>
-                            <strong>
-                              #
-                              {complaint.id}
-                            </strong>
-                          </td>
+                          🔗 Incident
 
+                        </button>
 
-                          <td>
-                            {complaint.name}
-                          </td>
+                      )}
 
 
-                          <td className="complaint-text-cell">
-                            {complaint.complaint_text}
-                          </td>
+                    </div>
 
 
-                          <td>
+                  </div>
 
-                            {complaint.category ===
-                            "Agriculture & Procurement"
-                              ? (
-                                <span className="farmer-tag">
-                                  🌾 Farmer
-                                </span>
-                              )
-                              : (
-                                complaint.category
-                              )}
+                )
 
-                          </td>
+              )}
 
 
-                          <td>
+            </div>
 
-                            <span
-                              className={`priority-badge ${
-                                complaint.severity ===
-                                "CRITICAL"
-                                  ? "priority-critical"
-                                  : complaint.severity ===
-                                    "HIGH"
-                                    ? "priority-high"
-                                    : complaint.severity ===
-                                      "MEDIUM"
-                                      ? "priority-medium"
-                                      : "priority-low"
-                              }`}
-                            >
-                              {complaint.severity}
-                            </span>
-
-                          </td>
-
-
-                          <td>
-
-                            <strong className="score-number">
-                              {
-                                complaint.priority_score
-                              }
-                            </strong>
-
-                          </td>
-
-
-                          <td>
-
-                            <div className="sla-cell">
-
-                              <strong>
-                                {
-                                  complaint.sla_hours
-                                }h
-                              </strong>
-
-
-                              {complaint.escalated && (
-
-                                <span className="escalated-badge">
-                                  ⚠ Escalated
-                                </span>
-
-                              )}
-
-                            </div>
-
-                          </td>
-
-
-                          <td>
-
-                            <button
-                              className="incident-button"
-                              onClick={() =>
-                                openIncident(
-                                  complaint.master_incident_id
-                                    ? complaint.master_incident_id
-                                    : complaint.id
-                                )
-                              }
-                            >
-
-                              🔗 #
-
-                              {complaint.master_incident_id
-                                ? complaint.master_incident_id
-                                : complaint.id}
-
-                            </button>
-
-                          </td>
-
-
-                          <td>
-
-                            <select
-                              className="status-select"
-                              value={
-                                complaint.status
-                              }
-                              onChange={(e) =>
-                                updateComplaintStatus(
-                                  complaint.id,
-                                  e.target.value
-                                )
-                              }
-                            >
-
-                              <option value="Submitted">
-                                Submitted
-                              </option>
-
-                              <option value="Assigned">
-                                Assigned
-                              </option>
-
-                              <option value="In Progress">
-                                In Progress
-                              </option>
-
-                              <option value="Escalated">
-                                Escalated
-                              </option>
-
-                              <option value="Reopened">
-                                Reopened
-                              </option>
-
-                              <option value="Resolved">
-                                Resolved
-                              </option>
-
-                            </select>
-
-                          </td>
-
-
-                          <td>
-
-                            {complaint.status ===
-                            "Resolved" ? (
-
-                              complaint.verification_status ===
-                              "Verified" ? (
-
-                                <span className="verified-badge">
-                                  ✓ Verified
-                                </span>
-
-                              ) : (
-
-                                <button
-                                  className="verify-button"
-                                  onClick={() => {
-
-                                    setShowVerification(
-                                      complaint
-                                    );
-
-                                    setVerificationComment(
-                                      ""
-                                    );
-
-                                  }}
-                                >
-                                  Verify
-                                </button>
-
-                              )
-
-                            ) : (
-
-                              <span className="pending-text">
-                                Pending
-                              </span>
-
-                            )}
-
-                          </td>
-
-                        </tr>
-
-                      )
-                    )}
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            )}
 
           </div>
 
 
-          {/* =================================
-              PRIORITY FORMULA
-          ================================= */}
+        </div>
 
-          <div className="formula-card">
 
-            <div className="formula-icon">
-              🧠
+        {/* =============================
+            OFFICER UPDATE MODAL
+        ============================== */}
+
+        {selectedComplaint && (
+
+          <div className="modal-overlay">
+
+
+            <div className="modal">
+
+
+              <button
+
+                className="close-button"
+
+                onClick={() =>
+
+                  setSelectedComplaint(
+                    null
+                  )
+
+                }
+
+              >
+
+                ×
+
+              </button>
+
+
+              <h2>
+
+                Update Complaint
+                {" "}
+                #{selectedComplaint.id}
+
+              </h2>
+
+
+              <label>
+                Assigned Officer
+              </label>
+
+
+              <input
+
+                placeholder="Enter officer name"
+
+                value={officerName}
+
+                onChange={(e) =>
+
+                  setOfficerName(
+                    e.target.value
+                  )
+
+                }
+
+              />
+
+
+              <label>
+
+                Work Progress:
+                {" "}
+                {progress}%
+
+              </label>
+
+
+              <input
+
+                type="range"
+
+                min="0"
+
+                max="100"
+
+                value={progress}
+
+                onChange={(e) =>
+
+                  setProgress(
+                    e.target.value
+                  )
+
+                }
+
+              />
+
+
+              <label>
+                Progress Status
+              </label>
+
+
+              <select
+
+                value={selectedStatus}
+
+                onChange={(e) =>
+
+                  setSelectedStatus(
+                    e.target.value
+                  )
+
+                }
+
+              >
+
+                <option>
+                  Submitted
+                </option>
+
+                <option>
+                  Assigned
+                </option>
+
+                <option>
+                  In Progress
+                </option>
+
+                <option>
+                  Resolved
+                </option>
+
+                <option>
+                  Reopened
+                </option>
+
+              </select>
+
+
+              <label>
+                Progress Update
+              </label>
+
+
+              <textarea
+
+                rows="4"
+
+                placeholder="Example: Field officer visited the location and repair work has started."
+
+                value={progressNote}
+
+                onChange={(e) =>
+
+                  setProgressNote(
+                    e.target.value
+                  )
+
+                }
+
+              />
+
+
+              <button
+
+                className="primary-button"
+
+                onClick={updateOfficerProgress}
+
+              >
+
+                Save Update
+
+              </button>
+
+
             </div>
 
-            <div>
-
-              <h3>
-                Explainable AI Priority Score
-              </h3>
-
-              <p>
-                The system combines severity, community impact, urgency, waiting time and location criticality.
-              </p>
-
-              <div className="formula">
-                P = 0.30S + 0.25A + 0.20U + 0.15W + 0.10C
-              </div>
-
-            </div>
 
           </div>
 
+        )}
 
-        </main>
 
-
-        {/* =================================
+        {/* =============================
             INCIDENT MODAL
-        ================================= */}
+        ============================== */}
 
         {incidentDetails && (
 
           <div className="modal-overlay">
 
-            <div className="modal-card">
+
+            <div className="modal incident-modal">
+
 
               <button
-                className="modal-close"
+
+                className="close-button"
+
                 onClick={() =>
+
                   setIncidentDetails(
                     null
                   )
+
                 }
+
               >
+
                 ×
+
               </button>
 
 
-              <div className="modal-title">
+              <h2>
 
-                <span className="modal-icon">
-                  🔗
-                </span>
+                🔗 Master Incident
+                {" "}
+                #{incidentDetails.master_incident_id}
 
-                <div>
-
-                  <h2>
-                    Master Incident #
-                    {
-                      incidentDetails.master_incident_id
-                    }
-                  </h2>
-
-                  <p>
-                    Related complaints detected by AI
-                  </p>
-
-                </div>
-
-              </div>
+              </h2>
 
 
-              {incidentLoading ? (
+              <p>
 
-                <div className="empty-state">
-                  Loading incident...
-                </div>
-
-              ) : (
-
-                <>
-
-                  <div className="incident-summary">
-
-                    <strong>
-                      {
-                        incidentDetails.total_related_complaints
-                      }
-                    </strong>
-
-                    <span>
-                      Related Complaints
-                    </span>
-
-                  </div>
-
-
-                  <div className="incident-list">
-
-                    {incidentDetails.complaints.map(
-                      complaint => (
-
-                        <div
-                          className="incident-item"
-                          key={
-                            complaint.id
-                          }
-                        >
-
-                          <div className="incident-item-top">
-
-                            <strong>
-                              Complaint #
-                              {
-                                complaint.id
-                              }
-                            </strong>
-
-                            <span
-                              className={`priority-badge ${
-                                complaint.severity ===
-                                "CRITICAL"
-                                  ? "priority-critical"
-                                  : complaint.severity ===
-                                    "HIGH"
-                                    ? "priority-high"
-                                    : complaint.severity ===
-                                      "MEDIUM"
-                                      ? "priority-medium"
-                                      : "priority-low"
-                              }`}
-                            >
-                              {
-                                complaint.severity
-                              }
-                            </span>
-
-                          </div>
-
-
-                          <p>
-                            {
-                              complaint.complaint_text
-                            }
-                          </p>
-
-
-                          <div className="incident-meta">
-
-                            <span>
-                              {complaint.category}
-                            </span>
-
-                            <span>
-                              Score:
-                              {" "}
-                              {
-                                complaint.priority_score
-                              }
-                            </span>
-
-                            <span>
-                              Status:
-                              {" "}
-                              {
-                                complaint.status
-                              }
-                            </span>
-
-                          </div>
-
-                        </div>
-
-                      )
-                    )}
-
-                  </div>
-
-                </>
-
-              )}
-
-            </div>
-
-          </div>
-
-        )}
-
-
-        {/* =================================
-            VERIFICATION MODAL
-        ================================= */}
-
-        {showVerification && (
-
-          <div className="modal-overlay">
-
-            <div className="verification-modal">
-
-              <button
-                className="modal-close"
-                onClick={() =>
-                  setShowVerification(
-                    null
-                  )
-                }
-              >
-                ×
-              </button>
-
-
-              <div className="modal-title">
-
-                <span className="modal-icon">
-                  ✅
-                </span>
-
-                <div>
-
-                  <h2>
-                    Resolution Verification
-                  </h2>
-
-                  <p>
-                    Complaint #
-                    {
-                      showVerification.id
-                    }
-                  </p>
-
-                </div>
-
-              </div>
-
-
-              <div className="verification-complaint">
+                Related Complaints:
+                {" "}
 
                 <strong>
-                  Complaint
+
+                  {incidentDetails.total_related_complaints}
+
                 </strong>
 
-                <p>
-                  {
-                    showVerification.complaint_text
-                  }
-                </p>
-
-              </div>
-
-
-              <label>
-                Verification Comment
-              </label>
-
-              <textarea
-                rows="4"
-                placeholder="Example: Water supply has been restored."
-                value={
-                  verificationComment
-                }
-                onChange={(e) =>
-                  setVerificationComment(
-                    e.target.value
-                  )
-                }
-              />
-
-
-              <p className="verification-question">
-                Has the complaint actually been resolved?
               </p>
 
 
-              <div className="verification-actions">
-
-                <button
-                  className="reject-button"
-                  disabled={
-                    verificationLoading
-                  }
-                  onClick={() =>
-                    verifyResolution(
-                      showVerification.id,
-                      false
-                    )
-                  }
-                >
-                  ✕ No — Reopen
-                </button>
+              <div className="related-list">
 
 
-                <button
-                  className="confirm-button"
-                  disabled={
-                    verificationLoading
-                  }
-                  onClick={() =>
-                    verifyResolution(
-                      showVerification.id,
-                      true
-                    )
-                  }
-                >
-                  ✓ Yes — Verify
-                </button>
+                {incidentDetails.complaints.map(
+
+                  (complaint) => (
+
+                    <div
+
+                      className="related-item"
+
+                      key={complaint.id}
+
+                    >
+
+                      <strong>
+
+                        #{complaint.id}
+
+                      </strong>
+
+
+                      <p>
+
+                        {complaint.complaint_text}
+
+                      </p>
+
+
+                    </div>
+
+                  )
+
+                )}
+
 
               </div>
 
+
             </div>
+
 
           </div>
 
         )}
 
+
       </div>
+
     );
+
   }
 
 
   return null;
+
 }
 
 
