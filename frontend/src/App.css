@@ -1247,3 +1247,121 @@ button:disabled {
   }
 
 }
+/* =====================================
+   GLOBAL TEXT VISIBILITY FIX
+===================================== */
+
+/* Main application text */
+.app-shell,
+.dashboard,
+.content,
+.panel,
+.section-card,
+.tracking-card,
+.centre-card,
+.booking-card,
+.officer-complaint-card,
+.stat-card {
+  color: #1f2937;
+}
+
+/* All headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: #111827 !important;
+}
+
+/* Normal paragraphs */
+p {
+  color: #334155;
+}
+
+/* Form labels */
+label {
+  color: #111827 !important;
+}
+
+/* Input text */
+input,
+textarea,
+select {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
+
+/* Placeholder */
+input::placeholder,
+textarea::placeholder {
+  color: #64748b !important;
+  opacity: 1;
+}
+
+/* Login page ResolveAI heading */
+.login-card h1,
+.role-card h1 {
+  color: #111827 !important;
+}
+
+/* Login and role page text */
+.login-card,
+.role-card {
+  color: #1f2937;
+}
+
+/* Role option text */
+.role-option h2,
+.role-option p {
+  color: #1f2937;
+}
+
+.role-option p {
+  color: #475569;
+}
+
+/* Panel descriptions */
+.panel-heading p,
+.subtitle,
+.role-card > p,
+.prototype-text {
+  color: #475569 !important;
+}
+
+/* Tracking details */
+.tracking-card,
+.tracking-card p,
+.tracking-grid div,
+.result-grid div {
+  color: #1f2937;
+}
+
+/* Officer dashboard */
+.officer-complaint-card,
+.complaint-info,
+.stat-card {
+  color: #1f2937;
+}
+
+/* Procurement cards */
+.centre-card,
+.booking-card,
+.slot-row {
+  color: #1f2937;
+}
+
+/* Links */
+a {
+  color: #1d4ed8;
+}
+
+/* Keep white text visible on colored buttons */
+.primary-button,
+.location-button,
+.slot-action button,
+.header-user button,
+.tabs button.active {
+  color: #ffffff !important;
+}
